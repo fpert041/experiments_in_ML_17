@@ -8,6 +8,8 @@ Created on Thu Nov 23 09:55:40 2017
 '''
 Task: Run the cell below to load our data. This piece of code is exactly the same as in the previous notebook.
 '''
+from myKNN import MyKnn
+
 
 ###%matplotlib inline###
 
@@ -15,17 +17,17 @@ from sklearn import datasets
 
 import numpy as np
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 #import k-nn classifier
 
-from sklearn.model_selection import train_test_split
+#from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
+#from sklearn.metrics import confusion_matrix
+#from sklearn.metrics import classification_report
 from sklearn.metrics import accuracy_score
 
-import operator
+#import operator
 
 
 iris = datasets.load_iris()
@@ -113,8 +115,8 @@ We are still using a simple training/test split (no cross-validation here)
 def euclideanDistance(in1,in2):
     result=0
     for i in range (0, len(in1)):
-        result += np.sqrt(in1[i] - in2[i])**2
-    return result
+        result += (in1[i] - in2[i])**2
+    return np.sqrt(result)
 
 def squaredDistance(in1,in2):
     result=0
@@ -134,23 +136,20 @@ def absDistance(in1,in2):
 
 # Input: x_ : point in test data
 
-#       X   : training data
+#       inX   : training data
 
 #       n   : number of neighbours to return
-
-#       T   : total number of training data
 
 # Output: n-nearest neighbours of x_ in training data X
 
 
-def getNeighbours(x_,inX,n): # where T is number of data
-    
+def getNeighbours(x_, inX, n):
     X = np.array(inX) # make sure X is ndarray
-    distances=np.zeros(X[:,0].size)
+    distances=np.zeros(len(X)) # create an empty array of 0s
     for i in range(0, distances.size):
         distances[i] = squaredDistance(x_, X[i])
-    distances=np.argsort(distances)
-    return distances[:n] # indeces of n-nearest neighbours in training data
+    sortedIndeces = np.argsort(distances)
+    return sortedIndeces[:n] # indeces of n-nearest neighbours in training data
 
 
 
@@ -164,10 +163,7 @@ def getNeighbours(x_,inX,n): # where T is number of data
 
 from collections import Counter
  
-def assignLabel(nLabels):
-    if nLabels.size == 1:
-        return nLabels
-        
+def assignLabel(nLabels):        
     data = Counter(nLabels)
     mode = data.most_common(1)[0][0]
     return mode # label assigned to test point x_
@@ -185,22 +181,34 @@ correct=0;
 nNumber = 10;
 
 for i in foldTest: #for all test points
-
     # knn classifier
     x_=X[i] # test point x_
     y_=y[i] # true label for y_
 
     
     # get neighbours of x_ in training data 
-    nIndeces = getNeighbours(x_, X, nNumber)
+    nIndeces = getNeighbours(x_, X[foldTrain], nNumber)
     
     # assignLabel to x_ based on neighbours
-    testPrediction = assignLabel( y[nIndeces] )
+    testPrediction = assignLabel( y[foldTrain][nIndeces] )
 
     # evaluate if the assigned label is correct (equal to y_)
     if testPrediction == y_ :
         correct += 1
+        
 
 accuracy = correct / len(foldTest)
 
 print(accuracy)
+
+##=== Now wrap the above up into a class and test it here:  ===##
+
+myKnn = MyKnn(10, 'euclidean')
+
+myKnn.fit(X[foldTrain], y[foldTrain])
+
+y_predictions = myKnn.predict(X[foldTest])
+
+accur = myKnn.accuracy_score(y[foldTest], y_predictions)
+
+print(accur)
